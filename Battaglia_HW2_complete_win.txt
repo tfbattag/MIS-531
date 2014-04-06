@@ -1,0 +1,1209 @@
+--****************************************************************************************************
+--HOMEWORK 2: Tom Battaglia
+--****************************************************************************************************
+
+
+--QUESTION 1(a):For the employees who are not from USA, 
+--show the Employee name (first and last name concatenated together as "John Doe", heading: Employee Name),
+--Country (heading: Country), birthdate (heading: Birthday Date).
+
+select corp.employees.firstname || ' ' || corp.employees.lastname as "Employee Name", 
+corp.employees.country as "Country", birthdate as "Birthday Date"
+from corp.employees 
+where corp.employees.country <> 'USA';
+
+--OUTPUT:
+Employee Name                   Country         Birthday Date
+------------------------------- --------------- -------------
+Steven Buchanan                 UK              04-MAR-65     
+Michael Suyama                  UK              02-JUL-73     
+Robert King                     UK              29-MAY-70     
+Anne Dodsworth                  UK              02-JUL-79 
+
+--EXPLANATION: This is a very simple SELECT on one table. The query leverages concatenation
+--to display a readable name, and it applies criteria in the WHERE clause to give non-USA
+--employees. This is done using the not-equals <> operator. To be more thorough, I could have forced
+--the comparisons to use the UPPER() function in the event that inconstistencies existed in the data.
+
+
+--*****************************************************************************************************
+--QUESTION 1(b):Modify the previous query to show only those employees who have extension numbers of length three. 
+--Also show their extension numbers (heading: Extension Number).
+
+select corp.employees.firstname || ' ' || corp.employees.lastname as "Employee Name", 
+corp.employees.country as "Country", birthdate as "Birthday Date",
+corp.employees.extension as "Extension Number"
+from corp.employees 
+where corp.employees.country <> 'USA'
+and trim(length(extension)) = 3;
+
+--OUTPUT:
+Employee Name                   Country         Birthday Date Extension Number
+------------------------------- --------------- ------------- ----------------
+Michael Suyama                  UK              02-JUL-73     428              
+Robert King                     UK              29-MAY-70     465              
+Anne Dodsworth                  UK              02-JUL-79     452
+
+
+--EXPLANATION: Same query as far as SELECT is concerned. There is a new column added
+--with a restriction applied to its values. This is done by using the TRIM() function
+--to ensure that there were no spaces in the field. Then, the LENGTH function is applied
+--to the data in the extension column.
+
+
+--*****************************************************************************************************
+--QUESTION 1(c):Sort the results on basis of Employee name (ascending). 
+--Ensure your query will never show employees who don't have a country saved for them.
+
+select corp.employees.firstname || ' ' || corp.employees.lastname as "Employee Name", 
+corp.employees.country as "Country", birthdate as "Birthday Date",
+corp.employees.extension as "Extension Number"
+from corp.employees 
+where corp.employees.country is not null
+and corp.employees.country <> 'USA'
+and trim(length(extension)) = 3
+order by "Employee Name" asc;
+
+--OUTPUT:
+Employee Name                   Country         Birthday Date Extension Number
+------------------------------- --------------- ------------- ----------------
+Anne Dodsworth                  UK              02-JUL-79     452              
+Michael Suyama                  UK              02-JUL-73     428              
+Robert King                     UK              29-MAY-70     465
+
+--EXPLANATION: This is the same exact query as above with sorting applied using
+--ORDER BY on the concatenated column, "Employee Name". 
+
+
+
+--****************************************************************************************************
+--QUESTION 2(a): Find orders placed between 25 March 2010 and 2 April 2010. 
+--Your query should exclude orders that were placed on these two dates mentioned above. 
+--Display the Order id with a column heading of: Order Number. 
+--Also display the Order Date (heading: Order Date), shipping country (heading: Ship Country). 
+--Sort by order date so that the latest order placed is shown first.
+
+
+select corp.orders.orderid as "Order Number", to_char(corp.orders.orderdate, 'MM/dd/YYYY hh24:mi') as "Order Date", 
+corp.employees.employeeid, corp.orders.shipcountry as "Ship Country"
+from corp.orders, corp.employees
+where corp.orders.employeeid = corp.employees.employeeid
+and corp.orders.orderdate between to_date('03/25/2010', 'MM/dd/YYYY')+1 and to_date('04/02/2010 00:00', 'MM/dd/YYYY hh24:mi')-1
+order by corp.orders.orderdate desc;  
+
+--OUTPUT:
+rder Number Order Date       EMPLOYEEID Ship Country  
+------------ ---------------- ---------- ---------------
+       10992 04/01/2010 00:00          1 USA             
+       10991 04/01/2010 00:00          1 Germany         
+       10990 04/01/2010 00:00          2 Austria         
+       10993 04/01/2010 00:00          7 Sweden          
+       10989 03/31/2010 00:00          2 Brazil          
+       10988 03/31/2010 00:00          3 USA             
+       10987 03/31/2010 00:00          8 UK              
+       10984 03/30/2010 00:00          1 USA             
+       10985 03/30/2010 00:00          2 Ireland         
+       10986 03/30/2010 00:00          8 Argentina       
+       10982 03/27/2010 00:00          2 Canada          
+       10981 03/27/2010 00:00          1 Brazil          
+       10980 03/27/2010 00:00          4 Sweden          
+       10983 03/27/2010 00:00          2 USA             
+       10979 03/26/2010 00:00          8 Austria         
+       10978 03/26/2010 00:00          9 Belgium         
+       10977 03/26/2010 00:00          8 Sweden          
+
+ 17 rows selected  
+
+--EXPLANATION: This query is a simple SELECT on two tables. I JOIN orders and employees
+--ON employeeid. To restrict output to the criteria specified, I use the BETWEEN operator
+--on orderdate. Notice that I use the +1 on the left date and -1 on the right date. This
+--is to force exclusion of the days required. I also format the dates to see if there are 
+--times. This was to verify that the cutoffs worked properly, although there was no additional
+--resolution beyond day.
+
+
+--*****************************************************************************************************************
+--QUESTION 2(b): List the employee names linked to these orders. Use a single column to display the combination of:
+--Title + First name + Last name (e.g., Mr. Karl Eller) along with these results. 
+--Give this column a heading of: Employee Name.
+
+select corp.orders.orderid as "Order Number", to_char(corp.orders.orderdate, 'MM/dd/YYYY hh24:mi') as "Order Date", 
+corp.employees.titleofcourtesy || ' ' ||corp.employees.firstname || ' ' || corp.employees.lastname as "Employee Name", 
+corp.orders.shipcountry as "Ship Country"
+from corp.orders, corp.employees
+where corp.orders.employeeid = corp.employees.employeeid
+and corp.orders.orderdate between to_date('03/25/2010', 'MM/dd/YYYY')+1 and to_date('04/02/2010 00:00', 'MM/dd/YYYY hh24:mi')-1
+order by corp.orders.orderdate desc;
+
+--OUTPUT:
+Order Number Order Date       Employee Name                                             Ship Country  
+------------ ---------------- --------------------------------------------------------- ---------------
+       10991 04/01/2010 00:00 Ms. Nancy Davolio                                         Germany         
+       10993 04/01/2010 00:00 Mr. Robert King                                           Sweden          
+       10992 04/01/2010 00:00 Ms. Nancy Davolio                                         USA             
+       10990 04/01/2010 00:00 Dr. Andrew Fuller                                         Austria         
+       10987 03/31/2010 00:00 Mr. Abel Bossini                                          UK              
+       10988 03/31/2010 00:00 Ms. Janet Leverling                                       USA             
+       10989 03/31/2010 00:00 Dr. Andrew Fuller                                         Brazil          
+       10984 03/30/2010 00:00 Ms. Nancy Davolio                                         USA             
+       10986 03/30/2010 00:00 Mr. Abel Bossini                                          Argentina       
+       10985 03/30/2010 00:00 Dr. Andrew Fuller                                         Ireland         
+       10980 03/27/2010 00:00 Mrs. Margaret Peacock                                     Sweden          
+       10983 03/27/2010 00:00 Dr. Andrew Fuller                                         USA             
+       10981 03/27/2010 00:00 Ms. Nancy Davolio                                         Brazil          
+       10982 03/27/2010 00:00 Dr. Andrew Fuller                                         Canada          
+       10979 03/26/2010 00:00 Mr. Abel Bossini                                          Austria         
+       10977 03/26/2010 00:00 Mr. Abel Bossini                                          Sweden          
+       10978 03/26/2010 00:00 Ms. Anne Dodsworth                                        Belgium         
+
+ 17 rows selected 
+
+--EXPLANATION: This is the same SELECT and JOIN as above. In addition, we query the name information and
+--concatenate them into a readable column. 
+
+
+--*****************************************************************************************************************
+--QUESTION 2(c): Next, add the city where the customers placing the order are based (heading: Customer City).
+
+select corp.orders.orderid as "Order Number", to_char(corp.orders.orderdate, 'MM/dd/YYYY hh24:mi') as "Order Date", 
+corp.employees.titleofcourtesy || ' ' ||corp.employees.firstname || ' ' || corp.employees.lastname as "Employee Name", 
+corp.orders.shipcountry as "Ship Country",
+corp.customers.city as "Customer City"
+from corp.orders, corp.employees, corp.customers
+where corp.orders.employeeid = corp.employees.employeeid
+and corp.customers.custid = corp.orders.custid
+and corp.orders.orderdate between to_date('03/25/2010', 'MM/dd/YYYY')+1 and to_date('04/02/2010 00:00', 'MM/dd/YYYY hh24:mi')-1
+order by corp.orders.orderdate desc;
+
+--OUTPUT:
+Order Number Order Date       Employee Name                                             Ship Country    Customer City 
+------------ ---------------- --------------------------------------------------------- --------------- ---------------
+       10991 04/01/2010 00:00 Ms. Nancy Davolio                                         Germany         Cunewalde       
+       10990 04/01/2010 00:00 Dr. Andrew Fuller                                         Austria         Graz            
+       10993 04/01/2010 00:00 Mr. Robert King                                           Sweden          Brdcke          
+       10992 04/01/2010 00:00 Ms. Nancy Davolio                                         USA             Portland        
+       10988 03/31/2010 00:00 Ms. Janet Leverling                                       USA             Albuquerque     
+       10987 03/31/2010 00:00 Mr. Abel Bossini                                          UK              London          
+       10989 03/31/2010 00:00 Dr. Andrew Fuller                                         Brazil          Rio de Janeiro  
+       10985 03/30/2010 00:00 Dr. Andrew Fuller                                         Ireland         Cork            
+       10984 03/30/2010 00:00 Ms. Nancy Davolio                                         USA             Boise           
+       10986 03/30/2010 00:00 Mr. Abel Bossini                                          Argentina       Buenos Aires    
+       10983 03/27/2010 00:00 Dr. Andrew Fuller                                         USA             Boise           
+       10982 03/27/2010 00:00 Dr. Andrew Fuller                                         Canada          Tsawassen       
+       10980 03/27/2010 00:00 Mrs. Margaret Peacock                                     Sweden          Brdcke          
+       10981 03/27/2010 00:00 Ms. Nancy Davolio                                         Brazil          Rio de Janeiro  
+       10977 03/26/2010 00:00 Mr. Abel Bossini                                          Sweden          Brdcke          
+       10979 03/26/2010 00:00 Mr. Abel Bossini                                          Austria         Graz            
+       10978 03/26/2010 00:00 Ms. Anne Dodsworth                                        Belgium         Bruxelles       
+
+ 17 rows selected 
+
+--EXPLANATION: Again, it's the same query from the SELECT and JOIN standpoint. We only add a column from the orders
+--table for "Customer City."
+
+
+--*****************************************************************************************************************
+--QUESTION 2(d): Filter out the orders from North America (i.e., do not show orders with a shipping country of
+--USA, Canada or Mexico).
+
+select corp.orders.orderid as "Order Number", to_char(corp.orders.orderdate, 'MM/dd/YYYY hh24:mi') as "Order Date", 
+corp.employees.titleofcourtesy || ' ' ||corp.employees.firstname || ' ' || corp.employees.lastname as "Employee Name", 
+corp.orders.shipcountry as "Ship Country",
+corp.customers.city as "Customer City"
+from corp.orders, corp.employees, corp.customers
+where corp.orders.shipcountry not in('USA', 'Canada', 'Mexico')
+and corp.orders.employeeid = corp.employees.employeeid
+and corp.customers.custid = corp.orders.custid
+and corp.orders.orderdate between to_date('03/25/2010', 'MM/dd/YYYY')+1 and to_date('04/02/2010 00:00', 'MM/dd/YYYY hh24:mi')-1
+order by corp.orders.orderdate desc; 
+
+--OUTPUT: 
+Order Number Order Date       Employee Name                                             Ship Country    Customer City 
+------------ ---------------- --------------------------------------------------------- --------------- ---------------
+       10990 04/01/2010 00:00 Dr. Andrew Fuller                                         Austria         Graz            
+       10993 04/01/2010 00:00 Mr. Robert King                                           Sweden          Brdcke          
+       10991 04/01/2010 00:00 Ms. Nancy Davolio                                         Germany         Cunewalde       
+       10989 03/31/2010 00:00 Dr. Andrew Fuller                                         Brazil          Rio de Janeiro  
+       10987 03/31/2010 00:00 Mr. Abel Bossini                                          UK              London          
+       10985 03/30/2010 00:00 Dr. Andrew Fuller                                         Ireland         Cork            
+       10986 03/30/2010 00:00 Mr. Abel Bossini                                          Argentina       Buenos Aires    
+       10981 03/27/2010 00:00 Ms. Nancy Davolio                                         Brazil          Rio de Janeiro  
+       10980 03/27/2010 00:00 Mrs. Margaret Peacock                                     Sweden          Brdcke          
+       10977 03/26/2010 00:00 Mr. Abel Bossini                                          Sweden          Brdcke          
+       10979 03/26/2010 00:00 Mr. Abel Bossini                                          Austria         Graz            
+       10978 03/26/2010 00:00 Ms. Anne Dodsworth                                        Belgium         Bruxelles       
+
+ 12 rows selected  
+
+--EXPLANATION: This query starts the same. However, we perform a MINUS operation using the NOT IN operator to 
+--remove results from the original query.
+
+
+--****************************************************************************************************
+--QUESTION 3(a):Find the orders shipped to Poland and those to Portugal. 
+--Display the order id (heading: Order Number), customer country (heading: Customer Country; note may not be the shipping country), 
+--and Employee Name (Title + first name + last name; as in the previous homework question).
+
+select x.orderid as "Order Number", y.country as "Customer Country", 
+e.titleofcourtesy || ' ' ||e.firstname || ' ' || e.lastname as "Employee Name"
+from corp.orders x, corp.customers y, corp.employees e
+where e.employeeid = x.employeeid
+and y.custid = x.custid
+and x.shipcountry in( 'Poland','Portugal');
+
+--OUTPUT:
+
+Order Number Customer Country Employee Name                                           
+------------ ---------------- ---------------------------------------------------------
+       10963 Portugal         Ms. Anne Dodsworth                                        
+       10491 Portugal         Mr. Abel Bossini                                          
+       10328 Portugal         Mrs. Margaret Peacock                                     
+       10551 Portugal         Mrs. Margaret Peacock                                     
+       10464 Portugal         Mrs. Margaret Peacock                                     
+       10352 Portugal         Ms. Janet Leverling                                       
+       10664 Portugal         Ms. Nancy Davolio                                         
+       10604 Portugal         Ms. Nancy Davolio                                         
+       11007 Portugal         Mr. Abel Bossini                                          
+       10336 Portugal         Mr. Robert King                                           
+       10477 Portugal         Mr. Steven Buchanan                                       
+       10397 Portugal         Mr. Steven Buchanan                                       
+       10433 Portugal         Ms. Janet Leverling                                       
+       10998 Poland           Mr. Abel Bossini                                          
+       10611 Poland           Mr. Michael Suyama                                        
+       10870 Poland           Mr. Steven Buchanan                                       
+       10906 Poland           Mrs. Margaret Peacock                                     
+       11044 Poland           Mrs. Margaret Peacock                                     
+       10374 Poland           Ms. Nancy Davolio                                         
+       10792 Poland           Ms. Nancy Davolio                                         
+
+ 20 rows selected
+
+--EXPLANATION: This is a simple select on three tables. I JOIN orders, customers and employees
+--on employeeid and custid. There is a resttiction to apply for Poland and Portugal. I did not use
+--a LIKE on 'Po%' as other countries beginning with 'Po' may exist. The query operates by 
+
+
+
+--****************************************************************************************************
+--QUESTION 3(b): Next: add columns to show the ID, last name and title of the supervising employee 
+--(i.e., the person each employee displayed in the previous part reports to). 
+--Use the following headings: Manager ID, Manager LName, Mgr Title. Manager Title is their job title (e.g., Vice President)
+
+select x.orderid as "Order Number", y.country as "Customer Country", 
+e.titleofcourtesy || ' ' ||e.firstname || ' ' || e.lastname as "Employee Name",
+e2.title, e2.firstname || ' ' || e2.lastname as "Manager Name"
+from corp.orders x, corp.customers y, corp.employees e, corp.employees e2
+where e.employeeid = x.employeeid
+and y.custid = x.custid
+and x.shipcountry in( 'Poland','Portugal')
+and e2.employeeid = e.reportsto;
+
+--OUTPUT:
+
+Order Number Customer Country Employee Name                                             TITLE                          Manager Name                  
+------------ ---------------- --------------------------------------------------------- ------------------------------ -------------------------------
+       10604 Portugal         Ms. Nancy Davolio                                         Vice President, Sales          Andrew Fuller                   
+       10963 Portugal         Ms. Anne Dodsworth                                        Sales Manager                  Steven Buchanan                 
+       10664 Portugal         Ms. Nancy Davolio                                         Vice President, Sales          Andrew Fuller                   
+       10491 Portugal         Mr. Abel Bossini                                          Sales Manager                  Steven Buchanan                 
+       10464 Portugal         Mrs. Margaret Peacock                                     Vice President, Sales          Andrew Fuller                   
+       10352 Portugal         Ms. Janet Leverling                                       Vice President, Sales          Andrew Fuller                   
+       10328 Portugal         Mrs. Margaret Peacock                                     Vice President, Sales          Andrew Fuller                   
+       10551 Portugal         Mrs. Margaret Peacock                                     Vice President, Sales          Andrew Fuller                   
+       11007 Portugal         Mr. Abel Bossini                                          Sales Manager                  Steven Buchanan                 
+       10477 Portugal         Mr. Steven Buchanan                                       Vice President, Sales          Andrew Fuller                   
+       10433 Portugal         Ms. Janet Leverling                                       Vice President, Sales          Andrew Fuller                   
+       10397 Portugal         Mr. Steven Buchanan                                       Vice President, Sales          Andrew Fuller                   
+       10336 Portugal         Mr. Robert King                                           Sales Manager                  Steven Buchanan                 
+       10611 Poland           Mr. Michael Suyama                                        Sales Manager                  Steven Buchanan                 
+       10870 Poland           Mr. Steven Buchanan                                       Vice President, Sales          Andrew Fuller                   
+       10792 Poland           Ms. Nancy Davolio                                         Vice President, Sales          Andrew Fuller                   
+       10998 Poland           Mr. Abel Bossini                                          Sales Manager                  Steven Buchanan                 
+       11044 Poland           Mrs. Margaret Peacock                                     Vice President, Sales          Andrew Fuller                   
+       10906 Poland           Mrs. Margaret Peacock                                     Vice President, Sales          Andrew Fuller                   
+       10374 Poland           Ms. Nancy Davolio                                         Vice President, Sales          Andrew Fuller                   
+
+ 20 rows selected  
+
+--EXPLANATION: This query required the use of a temporary view of employees e2 that could be used to JOIN
+--employees on employees using the reportsto ON employeeid.
+
+
+--****************************************************************************************************
+--QUESTION 4(a): Find the orders placed in 2008 to be shipped to Austria, Switzerland, Italy. 
+--Display the orderID (heading: Order Number), customer country (heading: Customer Country), customer company name (heading: Purchaser).
+
+select o.orderid as "Order Number", o.orderdate, o.shipcountry, cu.country as "Customer Country", cu.companyname as "Purchaser"
+from corp.orders o, corp.customers cu
+where (o.orderdate > to_date('01/01/2008', 'MM/dd/YYYY') and o.orderdate < to_date('01/01/2009', 'MM/dd/YYYY'))
+and cu.custid = o.custid
+and o.shipcountry in('Austria', 'Switzerland', 'Italy'); 
+
+--OUTPUT:
+Order Number ORDERDATE SHIPCOUNTRY     Customer Country Purchaser                              
+------------ --------- --------------- ---------------- ----------------------------------------
+       10370 03-DEC-08 Switzerland     Switzerland      Chop-suey Chinese                        
+       10254 11-JUL-08 Switzerland     Switzerland      Chop-suey Chinese                        
+       10390 23-DEC-08 Austria         Austria          Ernst Handel                             
+       10382 13-DEC-08 Austria         Austria          Ernst Handel                             
+       10368 29-NOV-08 Austria         Austria          Ernst Handel                             
+       10351 11-NOV-08 Austria         Austria          Ernst Handel                             
+       10263 23-JUL-08 Austria         Austria          Ernst Handel                             
+       10258 17-JUL-08 Austria         Austria          Ernst Handel                             
+       10300 09-SEP-08 Italy           Italy            Magazzini Alimentari Riuniti             
+       10275 07-AUG-08 Italy           Italy            Magazzini Alimentari Riuniti             
+       10392 24-DEC-08 Austria         Austria          Piccolo und mehr                         
+       10353 13-NOV-08 Austria         Austria          Piccolo und mehr                         
+       10288 23-AUG-08 Italy           Italy            Reggiani Caseifici                       
+       10255 12-JUL-08 Switzerland     Switzerland      Richter Supermarkt                       
+
+ 14 rows selected 
+
+--EXPLANATION: This query is a simple JOIN between the orders and customers tables with some criteria
+--added. I use an IN operation to restrict results to a listing of the countries that we want. To set the date
+--range, I used the AND to set the limits on the range as opposed to the BETWEEN. This was only for
+--simplicity and to ensure that the cutoffs were exactly at the beginning of each day.
+
+
+
+--****************************************************************************************************
+--QUESTION 4(b): Each order may have multiple products. 
+--Add a column in the output to show the product name (heading: Product Name). 
+--Note: if there is no direct way to link a table to an existing set of tables, 
+--you may have to add one or more tables for the purpose of joining (even if they play no part in the output).
+
+select o.orderid as "Order Number", o.orderdate, o.shipcountry, cu.country as "Customer Country", cu.companyname as "Purchaser", p.productname as "Product Name"
+from corp.orders o, corp.customers cu, corp.order_details od, corp.products p
+where (o.orderdate > to_date('01/01/2008', 'MM/dd/YYYY') and o.orderdate < to_date('01/01/2009', 'MM/dd/YYYY'))
+and cu.custid = o.custid
+and o.shipcountry in('Austria', 'Switzerland', 'Italy')
+and od.orderid = o.orderid
+and p.productid = od.productid
+order by o.orderid asc, p.productname;   
+
+--OUTPUT: 
+Order Number ORDERDATE SHIPCOUNTRY     Customer Country Purchaser                                Product Name                           
+------------ --------- --------------- ---------------- ---------------------------------------- ----------------------------------------
+       10254 11-JUL-08 Switzerland     Switzerland      Chop-suey Chinese                        Guarana Fantastica                       
+       10254 11-JUL-08 Switzerland     Switzerland      Chop-suey Chinese                        Longlife Tofu                            
+       10254 11-JUL-08 Switzerland     Switzerland      Chop-suey Chinese                        Pbti chinois                             
+       10255 12-JUL-08 Switzerland     Switzerland      Richter Supermarkt                       Chang                                    
+       10255 12-JUL-08 Switzerland     Switzerland      Richter Supermarkt                       Inlagd Sill                              
+       10255 12-JUL-08 Switzerland     Switzerland      Richter Supermarkt                       Pavlova                                  
+       10255 12-JUL-08 Switzerland     Switzerland      Richter Supermarkt                       Raclette Courdavault                     
+       10258 17-JUL-08 Austria         Austria          Ernst Handel                             Chang                                    
+       10258 17-JUL-08 Austria         Austria          Ernst Handel                             Chef Anton's Gumbo Mix                   
+       10258 17-JUL-08 Austria         Austria          Ernst Handel                             Mascarpone Fabioli                       
+       10263 23-JUL-08 Austria         Austria          Ernst Handel                             Guarana Fantastica                       
+       10263 23-JUL-08 Austria         Austria          Ernst Handel                             Longlife Tofu                            
+       10263 23-JUL-08 Austria         Austria          Ernst Handel                             Nord-Ost Matjeshering                    
+       10263 23-JUL-08 Austria         Austria          Ernst Handel                             Pavlova                                  
+       10275 07-AUG-08 Italy           Italy            Magazzini Alimentari Riuniti             Guarana Fantastica                       
+       10275 07-AUG-08 Italy           Italy            Magazzini Alimentari Riuniti             Raclette Courdavault                     
+       10288 23-AUG-08 Italy           Italy            Reggiani Caseifici                       Scottish Longbreads                      
+       10288 23-AUG-08 Italy           Italy            Reggiani Caseifici                       Tourtihre                                
+       10300 09-SEP-08 Italy           Italy            Magazzini Alimentari Riuniti             Louisiana Hot Spiced Okra                
+       10300 09-SEP-08 Italy           Italy            Magazzini Alimentari Riuniti             Scottish Longbreads                      
+       10351 11-NOV-08 Austria         Austria          Ernst Handel                             Ctte de Blaye                            
+       10351 11-NOV-08 Austria         Austria          Ernst Handel                             Gula Malacca                             
+       10351 11-NOV-08 Austria         Austria          Ernst Handel                             Jack's New England Clam Chowder          
+       10351 11-NOV-08 Austria         Austria          Ernst Handel                             Louisiana Fiery Hot Pepper Sauce         
+       10353 13-NOV-08 Austria         Austria          Piccolo und mehr                         Ctte de Blaye                            
+       10353 13-NOV-08 Austria         Austria          Piccolo und mehr                         Queso Cabrales                           
+       10368 29-NOV-08 Austria         Austria          Ernst Handel                             Ravioli Angelo                           
+       10368 29-NOV-08 Austria         Austria          Ernst Handel                             Rvssle Sauerkraut                        
+       10368 29-NOV-08 Austria         Austria          Ernst Handel                             Sir Rodney's Scones                      
+       10368 29-NOV-08 Austria         Austria          Ernst Handel                             Wimmers gute Semmelknvdel                
+       10370 03-DEC-08 Switzerland     Switzerland      Chop-suey Chinese                        Chai                                     
+       10370 03-DEC-08 Switzerland     Switzerland      Chop-suey Chinese                        Longlife Tofu                            
+       10370 03-DEC-08 Switzerland     Switzerland      Chop-suey Chinese                        Wimmers gute Semmelknvdel                
+       10382 13-DEC-08 Austria         Austria          Ernst Handel                             Carnarvon Tigers                         
+       10382 13-DEC-08 Austria         Austria          Ernst Handel                             Chef Anton's Gumbo Mix                   
+       10382 13-DEC-08 Austria         Austria          Ernst Handel                             Geitost                                  
+       10382 13-DEC-08 Austria         Austria          Ernst Handel                             Longlife Tofu                            
+       10382 13-DEC-08 Austria         Austria          Ernst Handel                             Thüringer Rostbratwurst                  
+       10390 23-DEC-08 Austria         Austria          Ernst Handel                             Gorgonzola Telino                        
+       10390 23-DEC-08 Austria         Austria          Ernst Handel                             Mozzarella di Giovanni                   
+       10390 23-DEC-08 Austria         Austria          Ernst Handel                             Spegesild                                
+       10390 23-DEC-08 Austria         Austria          Ernst Handel                             Steeleye Stout                           
+       10392 24-DEC-08 Austria         Austria          Piccolo und mehr                         Gudbrandsdalsost                         
+
+ 43 rows selected            
+
+--EXPLANATION: This query required the JOIN of four tables to access the required information:
+--orders, order_details, customers and products. The filtering stayed the same as the prior, but
+--the requirement for adding the product name for each item ordered within an order required joining
+--the order_details table to orders. To get the names for each product, I joined order_details to 
+--products on productid. This query retrieves all entries from order_detail that meet the criteria.
+--Thus the increase from 14 records to 43. By sorting on orderid first, they are "grouped" closely
+--in the resultset. A secondary sort is applied to product name that sorts after the first sort.
+
+
+--****************************************************************************************************
+--QUESTION 4(c): Next, calculate the total sale price ($) for each order line and give it a heading of: Sale Price. 
+--If there are two different products linked to the order they will be shown in different output rows. 
+--Ignore discounts.
+
+select o.orderid as "Order Number", o.shipcountry, 
+cu.country as "Customer Country", cu.companyname as "Purchaser", p.productname as "Product Name",
+(od.quantity * od.unitprice) as "Sale Price"
+from corp.orders o, corp.customers cu, corp.order_details od, corp.products p
+where (o.orderdate > to_date('01/01/2008', 'MM/dd/YYYY') and o.orderdate < to_date('01/01/2009', 'MM/dd/YYYY'))
+and cu.custid = o.custid
+and o.shipcountry in('Austria', 'Switzerland', 'Italy')
+and od.orderid = o.orderid
+and p.productid = od.productid
+order by o.orderid asc, p.productname;   
+
+--OUTPUT:
+
+Order Number SHIPCOUNTRY     Customer Country Purchaser                                Product Name                             Sale Price
+------------ --------------- ---------------- ---------------------------------------- ---------------------------------------- ----------
+       10254 Switzerland     Switzerland      Chop-suey Chinese                        Guarana Fantastica                               54 
+       10254 Switzerland     Switzerland      Chop-suey Chinese                        Longlife Tofu                                   168 
+       10254 Switzerland     Switzerland      Chop-suey Chinese                        Pbti chinois                                  403.2 
+       10255 Switzerland     Switzerland      Richter Supermarkt                       Chang                                           304 
+       10255 Switzerland     Switzerland      Richter Supermarkt                       Inlagd Sill                                     380 
+       10255 Switzerland     Switzerland      Richter Supermarkt                       Pavlova                                       486.5 
+       10255 Switzerland     Switzerland      Richter Supermarkt                       Raclette Courdavault                           1320 
+       10258 Austria         Austria          Ernst Handel                             Chang                                           760 
+       10258 Austria         Austria          Ernst Handel                             Chef Anton's Gumbo Mix                         1105 
+       10258 Austria         Austria          Ernst Handel                             Mascarpone Fabioli                            153.6 
+       10263 Austria         Austria          Ernst Handel                             Guarana Fantastica                            100.8 
+       10263 Austria         Austria          Ernst Handel                             Longlife Tofu                                   288 
+       10263 Austria         Austria          Ernst Handel                             Nord-Ost Matjeshering                          1242 
+       10263 Austria         Austria          Ernst Handel                             Pavlova                                         834 
+       10275 Italy           Italy            Magazzini Alimentari Riuniti             Guarana Fantastica                             43.2 
+       10275 Italy           Italy            Magazzini Alimentari Riuniti             Raclette Courdavault                            264 
+       10288 Italy           Italy            Reggiani Caseifici                       Scottish Longbreads                              30 
+       10288 Italy           Italy            Reggiani Caseifici                       Tourtihre                                        59 
+       10300 Italy           Italy            Magazzini Alimentari Riuniti             Louisiana Hot Spiced Okra                       408 
+       10300 Italy           Italy            Magazzini Alimentari Riuniti             Scottish Longbreads                             200 
+       10351 Austria         Austria          Ernst Handel                             Ctte de Blaye                                  4216 
+       10351 Austria         Austria          Ernst Handel                             Gula Malacca                                 1193.5 
+       10351 Austria         Austria          Ernst Handel                             Jack's New England Clam Chowder               100.1 
+       10351 Austria         Austria          Ernst Handel                             Louisiana Fiery Hot Pepper Sauce                168 
+       10353 Austria         Austria          Piccolo und mehr                         Ctte de Blaye                                 10540 
+       10353 Austria         Austria          Piccolo und mehr                         Queso Cabrales                                201.6 
+       10368 Austria         Austria          Ernst Handel                             Ravioli Angelo                                  390 
+       10368 Austria         Austria          Ernst Handel                             Rvssle Sauerkraut                             473.2 
+       10368 Austria         Austria          Ernst Handel                             Sir Rodney's Scones                              40 
+       10368 Austria         Austria          Ernst Handel                             Wimmers gute Semmelknvdel                       931 
+       10370 Switzerland     Switzerland      Chop-suey Chinese                        Chai                                            216 
+       10370 Switzerland     Switzerland      Chop-suey Chinese                        Longlife Tofu                                   160 
+       10370 Switzerland     Switzerland      Chop-suey Chinese                        Wimmers gute Semmelknvdel                       798 
+       10382 Austria         Austria          Ernst Handel                             Carnarvon Tigers                                450 
+       10382 Austria         Austria          Ernst Handel                             Chef Anton's Gumbo Mix                          544 
+       10382 Austria         Austria          Ernst Handel                             Geitost                                         120 
+       10382 Austria         Austria          Ernst Handel                             Longlife Tofu                                   400 
+       10382 Austria         Austria          Ernst Handel                             Thüringer Rostbratwurst                        1386 
+       10390 Austria         Austria          Ernst Handel                             Gorgonzola Telino                               600 
+       10390 Austria         Austria          Ernst Handel                             Mozzarella di Giovanni                        667.2 
+       10390 Austria         Austria          Ernst Handel                             Spegesild                                       432 
+       10390 Austria         Austria          Ernst Handel                             Steeleye Stout                                  576 
+       10392 Austria         Austria          Piccolo und mehr                         Gudbrandsdalsost                               1440 
+
+ 43 rows selected 
+
+--EXPLANATION: This query is only different from the prior in that it only adds a computation for each individual
+--line/record in the resultset. This is different than an aggregation. The computation happens discretely for each
+--record retrieved. To compute, I only needed to multiply quantity and unitprice to come up with the amount for 
+--each order_details line. No formatting was requested.
+
+
+--****************************************************************************************************
+--QUESTION 4(d): (introducing aggregation) Drop the output columns of Product Name and Sale Price from the previous parts. 
+--Instead, add columns for: how many products were included in the order (heading: Num Products) 
+--and total order sale price with a heading of: Order Total (i.e., across all products sold in that order; continue to ignore discounts). 
+--Here the order id will be shown distinctly.
+
+select o.orderid as "Order Number", o.shipcountry, 
+cu.country as "Customer Country", cu.companyname as "Purchaser",
+sum(od.quantity) as "Num Products",
+sum(od.quantity * od.unitprice) as "Order Total"
+from corp.orders o, corp.customers cu, corp.order_details od, corp.products p
+where (o.orderdate > to_date('01/01/2008', 'MM/dd/YYYY') and o.orderdate < to_date('01/01/2009', 'MM/dd/YYYY'))
+and cu.custid = o.custid
+and o.shipcountry in('Austria', 'Switzerland', 'Italy')
+and od.orderid = o.orderid
+and p.productid = od.productid
+group by o.orderid, o.shipcountry, cu.country, cu.companyname;  
+
+--OUTPUT:
+
+Order Number SHIPCOUNTRY     Customer Country Purchaser                                Num Products Order Total
+------------ --------------- ---------------- ---------------------------------------- ------------ -----------
+       10263 Austria         Austria          Ernst Handel                                      184      2464.8 
+       10392 Austria         Austria          Piccolo und mehr                                   50        1440 
+       10254 Switzerland     Switzerland      Chop-suey Chinese                                  57       625.2 
+       10300 Italy           Italy            Magazzini Alimentari Riuniti                       50         608 
+       10353 Austria         Austria          Piccolo und mehr                                   62     10741.6 
+       10390 Austria         Austria          Ernst Handel                                      169      2275.2 
+       10288 Italy           Italy            Reggiani Caseifici                                 13          89 
+       10368 Austria         Austria          Ernst Handel                                       78      1834.2 
+       10382 Austria         Austria          Ernst Handel                                      165        2900 
+       10255 Switzerland     Switzerland      Richter Supermarkt                                110      2490.5 
+       10351 Austria         Austria          Ernst Handel                                      120      5677.6 
+       10258 Austria         Austria          Ernst Handel                                      121      2018.6 
+       10275 Italy           Italy            Magazzini Alimentari Riuniti                       18       307.2 
+       10370 Switzerland     Switzerland      Chop-suey Chinese                                  65        1174 
+
+ 14 rows selected
+
+--EXPLANATION: This query differs from the prior. The first thing to notice is that it reduces the number of
+--records retrived from the number of order_details entries (43) to the number of orders entries (14). By 
+--applying aggregation using the SUM() funtion on the od.quantity and (od.quantity * od.unitprice), we are
+--able to compute these sums for the groups of orders through creating groups on primairly orderid. I did not 
+--ORDER BY on orderid only because it wasn't requested. However, I could have ordered ascending on orderid. 
+--Also, ordering is requested in the next question.
+ 
+
+--****************************************************************************************************
+--QUESTION 4(e): Show the order total in the format of $999,999.99. 
+--Add a sorting condition: sort the results by total sale price of the order; highest order total should be shown first.
+
+select o.orderid as "Order Number", o.shipcountry, 
+cu.country as "Customer Country", cu.companyname as "Purchaser",
+sum(od.quantity) as "Num Products",
+to_char(sum(od.quantity * od.unitprice), '$999,999,999.99') as "Order Total"
+from corp.orders o, corp.customers cu, corp.order_details od, corp.products p
+where (o.orderdate > to_date('01/01/2008', 'MM/dd/YYYY') and o.orderdate < to_date('01/01/2009', 'MM/dd/YYYY'))
+and cu.custid = o.custid
+and o.shipcountry in('Austria', 'Switzerland', 'Italy')
+and od.orderid = o.orderid
+and p.productid = od.productid
+group by o.orderid, o.shipcountry, cu.country, cu.companyname
+order by "Order Total" desc;
+
+--OUTPUT:
+
+Order Number SHIPCOUNTRY     Customer Country Purchaser                                Num Products Order Total    
+------------ --------------- ---------------- ---------------------------------------- ------------ ----------------
+       10353 Austria         Austria          Piccolo und mehr                                   62       $10,741.60 
+       10351 Austria         Austria          Ernst Handel                                      120        $5,677.60 
+       10382 Austria         Austria          Ernst Handel                                      165        $2,900.00 
+       10255 Switzerland     Switzerland      Richter Supermarkt                                110        $2,490.50 
+       10263 Austria         Austria          Ernst Handel                                      184        $2,464.80 
+       10390 Austria         Austria          Ernst Handel                                      169        $2,275.20 
+       10258 Austria         Austria          Ernst Handel                                      121        $2,018.60 
+       10368 Austria         Austria          Ernst Handel                                       78        $1,834.20 
+       10392 Austria         Austria          Piccolo und mehr                                   50        $1,440.00 
+       10370 Switzerland     Switzerland      Chop-suey Chinese                                  65        $1,174.00 
+       10254 Switzerland     Switzerland      Chop-suey Chinese                                  57          $625.20 
+       10300 Italy           Italy            Magazzini Alimentari Riuniti                       50          $608.00 
+       10275 Italy           Italy            Magazzini Alimentari Riuniti                       18          $307.20 
+       10288 Italy           Italy            Reggiani Caseifici                                 13           $89.00 
+
+ 14 rows selected 
+
+--EXPLANATION: This is the same query as the last one with only two things changed. I format the order total
+--to USD currency and sort on the order total using the ORDER BY function. I use DESC to put the highest value first.
+
+
+--****************************************************************************************************
+--QUESTION 5(a):The organization wants data on employee performance. 
+--Select the number of orders each employee was responsible for. 
+--Your output should show the employee Id (heading: EmployeeID), the employee name (Employee First Name + Employee Last Name in a single column, e.g., John Doe), 
+--number of orders handled. (9 distinct employees)
+
+select o.employeeid as "EmployeeID", e.firstname || ' ' || e.lastname as "Emp. Name", count(o.orderid) as "Number of Orders"
+from corp.orders o, corp.employees e
+where o.employeeid = e.employeeid
+group by o.employeeid, e.lastname, e.firstname;  
+
+--OUTPUT: 
+
+EmployeeID Emp. Name                       Number of Orders
+---------- ------------------------------- ----------------
+         2 Andrew Fuller                                 95 
+         7 Robert King                                   72 
+         6 Michael Suyama                                67 
+         3 Janet Leverling                              126 
+         1 Nancy Davolio                                122 
+         4 Margaret Peacock                             153 
+         8 Abel Bossini                                 102 
+         5 Steven Buchanan                               42 
+         9 Anne Dodsworth                                43 
+
+ 9 rows selected  
+
+--EXPLANATION: This query only required a simple inner JOIN to combine
+--employee information with order information. The aggregation function
+--to determine the number of orders was applied using COUNT() on orderid.
+--Each group was determined by primarily orderid, but employee name inforamtion
+--is also required.
+--This query works by identifying groups which in this case are the
+--counts of order occurences. Then the select pulls information across
+--the two tables to complete the groups. 
+
+
+--****************************************************************************************************
+--QUESTION 5(b): Also show the number of customers each employee has served (across orders) with a heading of: "Customers Served". 
+--Add a sort condition so results are listed by employeeID (ascending).
+
+select o.employeeid as "EmployeeID", e.firstname || ' ' || e.lastname as "Emp. Name", count(o.orderid) as "Number of Orders", count(distinct o.custid) as "Customers Served"
+from corp.orders o, corp.employees e
+where o.employeeid = e.employeeid
+group by o.employeeid, e.lastname, e.firstname
+order by "EmployeeID" asc;   
+
+--OUTPUT: 
+
+EmployeeID Emp. Name                       Number of Orders Customers Served
+---------- ------------------------------- ---------------- ----------------
+         1 Nancy Davolio                                122               65 
+         2 Andrew Fuller                                 95               58 
+         3 Janet Leverling                              126               63 
+         4 Margaret Peacock                             153               73 
+         5 Steven Buchanan                               42               29 
+         6 Michael Suyama                                67               43 
+         7 Robert King                                   72               45 
+         8 Abel Bossini                                 102               55 
+         9 Anne Dodsworth                                43               29 
+
+ 9 rows selected  
+
+--EXPLANATION: This query is primariily identical to the above. The difference is that
+--we also aggregate on the count of customers served. To acquire customers served as implied in 
+--natural language, the DISTINCT operator is applied to the counting of custids, as each customer 
+--had placed many orders.
+
+
+--****************************************************************************************************
+--QUESTION 5(c): Show the average time of shipment of these orders (i.e., number of days between the date the order was placed and the order was shipped) 
+--with a heading of: Average ShipDays. Format the column to 2 decimal places.
+
+select o.employeeid as "EmployeeID", e.firstname || ' ' || e.lastname as "Emp. Name", 
+count(o.orderid) as "Number of Orders", count(distinct o.custid) as "Customers Served",
+to_char(avg(o.shippeddate - o.orderdate), '99,999.99') as "Average ShipDays"
+from corp.orders o, corp.employees e
+where o.employeeid = e.employeeid
+group by o.employeeid, e.lastname, e.firstname
+order by "EmployeeID" asc;   
+
+--OUTPUT:  
+
+EmployeeID Emp. Name                       Number of Orders Customers Served Average ShipDays
+---------- ------------------------------- ---------------- ---------------- ----------------
+         1 Nancy Davolio                                122               65       7.66       
+         2 Andrew Fuller                                 95               58       8.03       
+         3 Janet Leverling                              126               63       8.42       
+         4 Margaret Peacock                             153               73       8.80       
+         5 Steven Buchanan                               42               29       7.02       
+         6 Michael Suyama                                67               43       9.09       
+         7 Robert King                                   72               45       8.38       
+         8 Abel Bossini                                 102               55       8.79       
+         9 Anne Dodsworth                                43               29      10.52       
+
+ 9 rows selected 
+
+--EXPLANATION: Again, the basis for this query is not changed. There is additional aggregation
+--needed to compute the average number of shipping days for each employee's orders. To produce the
+--average shipping time, we subtract the shipdate from the orderdate to get the time elapsed. Then,
+--we modify the query by aggregating for the employee by applying the AVG() function to the computation.
+
+
+--****************************************************************************************************
+--QUESTION 5(d): Modify the query to take into account shipped dates that are null. 
+--Assume such orders were shipped immediately (i.e., 0 days between placing and shipping the order).
+
+select o.employeeid as "EmployeeID", e.firstname || ' ' || e.lastname as "Emp. Name", 
+count(o.orderid) as "Number of Orders", count(distinct o.custid) as "Customers Served",
+to_char(avg(coalesce(o.shippeddate - o.orderdate,0)), '99,9999.99') as "Average ShipDays"
+from corp.orders o, corp.employees e
+where o.employeeid = e.employeeid
+group by o.employeeid, e.lastname, e.firstname
+order by "EmployeeID" asc;  
+
+--OUTPUT: 
+
+EmployeeID Emp. Name                       Number of Orders Customers Served Average ShipDays
+---------- ------------------------------- ---------------- ---------------- ----------------
+         1 Nancy Davolio                                122               65        7.48      
+         2 Andrew Fuller                                 95               58        7.78      
+         3 Janet Leverling                              126               63        8.42      
+         4 Margaret Peacock                             153               73        8.51      
+         5 Steven Buchanan                               42               29        7.02      
+         6 Michael Suyama                                67               43        8.82      
+         7 Robert King                                   72               45        8.03      
+         8 Abel Bossini                                 102               55        8.44      
+         9 Anne Dodsworth                                43               29       10.28      
+
+ 9 rows selected    
+
+--EXPLANATION: To account for null shipping dates, the easies way to deal with it was to apply the
+--COALESCE function during the aggreagtion of the averages, substituting zeros for nulls. Otherwise,
+--the query is unchanged.
+
+
+--****************************************************************************************************
+--QUESTION 5(e): Show only those employees who have No of Orders greater than 100 and Average shipping days less than 8.5 days.
+
+select o.employeeid as "EmployeeID", e.firstname || ' ' || e.lastname as "Emp. Name", 
+count(o.orderid) as "Number of Orders", count(distinct o.custid) as "Customers Served",
+to_char(avg(coalesce(o.shippeddate - o.orderdate,0)), '99,9999.99') as "Average ShipDays"
+from corp.orders o, corp.employees e
+where o.employeeid = e.employeeid
+group by o.employeeid, e.lastname, e.firstname
+having((count(o.orderid) > 100) and avg(coalesce(o.shippeddate - o.orderdate,0)) < 8.5)
+order by "EmployeeID" asc;  
+
+--OUTPUT:
+
+EmployeeID Emp. Name                       Number of Orders Customers Served Average ShipDays
+---------- ------------------------------- ---------------- ---------------- ----------------
+         1 Nancy Davolio                                122               65        7.48      
+         3 Janet Leverling                              126               63        8.42      
+         8 Abel Bossini                                 102               55        8.44 
+
+--EXPLANATION: The only requirement here is to apply a filter to the groupings using the HAVING
+--operator. It does require two conditions (> 100 and < 8.5 days). Thus, I used the AND logical
+--operator to require both conditions to be met.
+
+
+--****************************************************************************************************
+--QUESTION 6(a) For each product, display the product id (heading: ProductID), 
+--product name (heading: Product Name), 
+--and number of orders placed for that product (heading: No of Orders).
+
+select od.productid, p.productname, count(od.productid) as "No of Orders"
+from corp.order_details od, corp.products p
+where p.productid = od.productid
+group by od.productid, p.productid, p.productname
+order by od.productid asc; 
+
+--EXPALANTION: The first thing was to identify that there would be
+--a grouping created based on the counts of the orders for each product.
+--Thus, I knew that I would be countina and grouping based on productid.
+--Then, I just needed results that would return all of the products that 
+--were ever ordered. These came from the order_details table. The products
+--table could have had items that had not ever been ordered.
+--Last, I joined products and order_details on id to retrieve the names
+--of the products. Ascending order was applied to productid.  
+
+--OUTPUT:
+
+ PRODUCTID PRODUCTNAME                              No of Orders
+---------- ---------------------------------------- ------------
+         1 Chai                                               38 
+         2 Chang                                              43 
+         3 Aniseed Syrup                                      12 
+         4 Chef Anton's Cajun Seasoning                       20 
+         5 Chef Anton's Gumbo Mix                             10 
+         6 Grandma's Boysenberry Spread                       12 
+         7 Uncle Bob's Organic Dried Pears                    29 
+         8 Northwoods Cranberry Sauce                         13 
+         9 Mishi Kobe Niku                                     5 
+        10 Ikura                                              33 
+        11 Queso Cabrales                                     38 
+        12 Queso Manchego La Pastora                          14 
+        13 Konbu                                              40 
+        14 Tofu                                               22 
+        15 Genen Shouyu                                        6 
+        16 Pavlova                                            42 
+        17 Alice Mutton                                       37 
+        18 Carnarvon Tigers                                   26 
+        19 Teatime Chocolate Biscuits                         37 
+        20 Sir Rodney's Marmalade                             16 
+        21 Sir Rodney's Scones                                39 
+        22 Gustaf's Kndckebrvd                                14 
+        23 Tunnbrvd                                           20 
+        24 Guarana Fantastica                                 51 
+        25 NuNuCa Nuß-Nougat-Creme                            18 
+        26 Gumbdr Gummibdrchen                                32 
+        27 Schoggi Schokolade                                  9 
+        28 Rvssle Sauerkraut                                  33 
+        29 Thüringer Rostbratwurst                            32 
+        30 Nord-Ost Matjeshering                              31 
+        31 Gorgonzola Telino                                  51 
+        32 Mascarpone Fabioli                                 15 
+        33 Geitost                                            32 
+        34 Sasquatch Ale                                      19 
+        35 Steeleye Stout                                     36 
+        36 Inlagd Sill                                        31 
+        37 Gravad lax                                          6 
+        38 Ctte de Blaye                                      24 
+        39 Chartreuse verte                                   30 
+        40 Boston Crab Meat                                   41 
+        41 Jack's New England Clam Chowder                    47 
+        42 Singaporean Hokkien Fried Mee                      30 
+        43 Ipoh Coffee                                        27 
+        44 Gula Malacca                                       23 
+        45 Rxgede sild                                        14 
+        46 Spegesild                                          27 
+        47 Zaanse koeken                                      21 
+        48 Chocolade                                           6 
+        49 Maxilaku                                           21 
+        50 Valkoinen suklaa                                   10 
+        51 Manjimup Dried Apples                              39 
+        52 Filo Mix                                           29 
+        53 Perth Pasties                                      30 
+        54 Tourtihre                                          36 
+        55 Pbti chinois                                       33 
+        56 Gnocchi di nonna Alice                             50 
+        57 Ravioli Angelo                                     23 
+        58 Escargots de Bourgogne                             18 
+        59 Raclette Courdavault                               54 
+        60 Camembert Pierrot                                  51 
+        61 Sirop dirable                                     24 
+        62 Tarte au sucre                                     48 
+        63 Vegie-spread                                       17 
+        64 Wimmers gute Semmelknvdel                          30 
+        65 Louisiana Fiery Hot Pepper Sauce                   32 
+        66 Louisiana Hot Spiced Okra                           8 
+        67 Laughing Lumberjack Lager                          10 
+        68 Scottish Longbreads                                34 
+        69 Gudbrandsdalsost                                   31 
+        70 Outback Lager                                      39 
+        71 Flxtemysost                                        42 
+        72 Mozzarella di Giovanni                             38 
+        73 Rvd Kaviar                                         14 
+        74 Longlife Tofu                                      13 
+        75 Rhvnbrdu Klosterbier                               46 
+        76 Lakkalikvvri                                       39 
+        77 Original Frankfurter grüne Soße                    38 
+
+ 77 rows selected 
+
+
+--****************************************************************************************************
+--QUESTION 6(b): In the output: add product line names for all the products (heading: Line Name).
+
+select od.productid, p.productname, pl.pl_name, count(od.productid) as "No of Orders"
+from corp.order_details od, corp.products p, corp.product_lines pl
+where p.productid = od.productid
+and pl.pl_id = p.pl_id
+group by od.productid, p.productid, p.productname, pl.pl_name
+order by od.productid asc;  
+
+--EXPLANATION: The query is basically the same as the prior query. Because the grouping
+--was already identified and primarily operates on productid (althought the names of products
+--and lines are required), I only needed to JOIN the prduct_lines table to the products
+--table to retrieve the line-names for each product. Output is still restriced to 
+--independent products by the GROUP BY.
+
+--OUTPUT:
+
+ PRODUCTID PRODUCTNAME                              PL_NAME         No of Orders
+---------- ---------------------------------------- --------------- ------------
+         1 Chai                                     Beverages                 38 
+         2 Chang                                    Beverages                 43 
+         3 Aniseed Syrup                            Condiments                12 
+         4 Chef Anton's Cajun Seasoning             Condiments                20 
+         5 Chef Anton's Gumbo Mix                   Condiments                10 
+         6 Grandma's Boysenberry Spread             Condiments                12 
+         7 Uncle Bob's Organic Dried Pears          Produce                   29 
+         8 Northwoods Cranberry Sauce               Condiments                13 
+         9 Mishi Kobe Niku                          Meat/Poultry               5 
+        10 Ikura                                    Seafood                   33 
+        11 Queso Cabrales                           Dairy Products            38 
+        12 Queso Manchego La Pastora                Dairy Products            14 
+        13 Konbu                                    Seafood                   40 
+        14 Tofu                                     Produce                   22 
+        15 Genen Shouyu                             Condiments                 6 
+        16 Pavlova                                  Confections               42 
+        17 Alice Mutton                             Meat/Poultry              37 
+        18 Carnarvon Tigers                         Seafood                   26 
+        19 Teatime Chocolate Biscuits               Confections               37 
+        20 Sir Rodney's Marmalade                   Confections               16 
+        21 Sir Rodney's Scones                      Confections               39 
+        22 Gustaf's Kndckebrvd                      Grains/Cereals            14 
+        23 Tunnbrvd                                 Grains/Cereals            20 
+        24 Guarana Fantastica                       Beverages                 51 
+        25 NuNuCa Nuß-Nougat-Creme                  Confections               18 
+        26 Gumbdr Gummibdrchen                      Confections               32 
+        27 Schoggi Schokolade                       Confections                9 
+        28 Rvssle Sauerkraut                        Produce                   33 
+        29 Thüringer Rostbratwurst                  Meat/Poultry              32 
+        30 Nord-Ost Matjeshering                    Seafood                   31 
+        31 Gorgonzola Telino                        Dairy Products            51 
+        32 Mascarpone Fabioli                       Dairy Products            15 
+        33 Geitost                                  Dairy Products            32 
+        34 Sasquatch Ale                            Beverages                 19 
+        35 Steeleye Stout                           Beverages                 36 
+        36 Inlagd Sill                              Seafood                   31 
+        37 Gravad lax                               Seafood                    6 
+        38 Ctte de Blaye                            Beverages                 24 
+        39 Chartreuse verte                         Beverages                 30 
+        40 Boston Crab Meat                         Seafood                   41 
+        41 Jack's New England Clam Chowder          Seafood                   47 
+        42 Singaporean Hokkien Fried Mee            Grains/Cereals            30 
+        43 Ipoh Coffee                              Beverages                 27 
+        44 Gula Malacca                             Condiments                23 
+        45 Rxgede sild                              Seafood                   14 
+        46 Spegesild                                Seafood                   27 
+        47 Zaanse koeken                            Confections               21 
+        48 Chocolade                                Confections                6 
+        49 Maxilaku                                 Confections               21 
+        50 Valkoinen suklaa                         Confections               10 
+        51 Manjimup Dried Apples                    Produce                   39 
+        52 Filo Mix                                 Grains/Cereals            29 
+        53 Perth Pasties                            Meat/Poultry              30 
+        54 Tourtihre                                Meat/Poultry              36 
+        55 Pbti chinois                             Meat/Poultry              33 
+        56 Gnocchi di nonna Alice                   Grains/Cereals            50 
+        57 Ravioli Angelo                           Grains/Cereals            23 
+        58 Escargots de Bourgogne                   Seafood                   18 
+        59 Raclette Courdavault                     Dairy Products            54 
+        60 Camembert Pierrot                        Dairy Products            51 
+        61 Sirop dirable                           Condiments                24 
+        62 Tarte au sucre                           Confections               48 
+        63 Vegie-spread                             Condiments                17 
+        64 Wimmers gute Semmelknvdel                Grains/Cereals            30 
+        65 Louisiana Fiery Hot Pepper Sauce         Condiments                32 
+        66 Louisiana Hot Spiced Okra                Condiments                 8 
+        67 Laughing Lumberjack Lager                Beverages                 10 
+        68 Scottish Longbreads                      Confections               34 
+        69 Gudbrandsdalsost                         Dairy Products            31 
+        70 Outback Lager                            Beverages                 39 
+        71 Flxtemysost                              Dairy Products            42 
+        72 Mozzarella di Giovanni                   Dairy Products            38 
+        73 Rvd Kaviar                               Seafood                   14 
+        74 Longlife Tofu                            Produce                   13 
+        75 Rhvnbrdu Klosterbier                     Beverages                 46 
+        76 Lakkalikvvri                             Beverages                 39 
+        77 Original Frankfurter grüne Soße          Condiments                38 
+
+ 77 rows selected
+
+
+--****************************************************************************************************
+--QUESTION 6(c): Show the total sales (dollar value of sales) made for each product in the format of $999,999.00.
+--Heading: Total Sales. Ignore discounts for this part.
+
+select od.productid, p.productname, pl.pl_name, count(od.productid) as "No of Orders", to_char(sum(od.unitprice * od.quantity), '$999,999.99') as "Total Sales"
+from corp.order_details od, corp.products p, corp.product_lines pl
+where p.productid = od.productid
+and pl.pl_id = p.pl_id
+group by od.productid, p.productid, p.productname, pl.pl_name
+order by od.productid asc; 
+
+--EXPLANATION: The basic construct for this query has not changed much. The only requirement
+--was to display the total sales for each product already queried. Thus, I added a computation
+--that would determine the sales amount for each product throughout all entries in the 
+--order_details table. This computation first multiplies unitprice and quantity to determine 
+--the amount for each entry in the oreder_details table and then sums them for each product
+--based on the aggregation of productid. Formatting is applied using the TO_CHAR function.
+
+--OUTPUT:
+
+ PRODUCTID PRODUCTNAME                              PL_NAME         No of Orders Total Sales
+---------- ---------------------------------------- --------------- ------------ ------------
+         1 Chai                                     Beverages                 38   $14,277.60 
+         2 Chang                                    Beverages                 43   $17,951.20 
+         3 Aniseed Syrup                            Condiments                12    $3,080.00 
+         4 Chef Anton's Cajun Seasoning             Condiments                20    $9,424.80 
+         5 Chef Anton's Gumbo Mix                   Condiments                10    $5,801.15 
+         6 Grandma's Boysenberry Spread             Condiments                12    $7,345.00 
+         7 Uncle Bob's Organic Dried Pears          Produce                   29   $22,464.00 
+         8 Northwoods Cranberry Sauce               Condiments                13   $13,760.00 
+         9 Mishi Kobe Niku                          Meat/Poultry               5    $8,827.00 
+        10 Ikura                                    Seafood                   33   $22,140.20 
+        11 Queso Cabrales                           Dairy Products            38   $13,902.00 
+        12 Queso Manchego La Pastora                Dairy Products            14   $12,866.80 
+        13 Konbu                                    Seafood                   40    $5,234.40 
+        14 Tofu                                     Produce                   22    $8,630.40 
+        15 Genen Shouyu                             Condiments                 6    $1,813.50 
+        16 Pavlova                                  Confections               42   $18,261.55 
+        17 Alice Mutton                             Meat/Poultry              37   $35,482.20 
+        18 Carnarvon Tigers                         Seafood                   26   $30,487.50 
+        19 Teatime Chocolate Biscuits               Confections               37    $6,159.50 
+        20 Sir Rodney's Marmalade                   Confections               16   $23,635.80 
+        21 Sir Rodney's Scones                      Confections               39    $9,636.00 
+        22 Gustaf's Kndckebrvd                      Grains/Cereals            14    $7,232.40 
+        23 Tunnbrvd                                 Grains/Cereals            20    $4,840.20 
+        24 Guarana Fantastica                       Beverages                 51    $4,782.60 
+        25 NuNuCa Nuß-Nougat-Creme                  Confections               18    $4,051.60 
+        26 Gumbdr Gummibdrchen                      Confections               32   $21,534.90 
+        27 Schoggi Schokolade                       Confections                9   $15,231.50 
+        28 Rvssle Sauerkraut                        Produce                   33   $26,865.60 
+        29 Thüringer Rostbratwurst                  Meat/Poultry              32   $87,736.40 
+        30 Nord-Ost Matjeshering                    Seafood                   31   $14,609.94 
+        31 Gorgonzola Telino                        Dairy Products            51   $16,172.50 
+        32 Mascarpone Fabioli                       Dairy Products            15    $9,171.20 
+        33 Geitost                                  Dairy Products            32    $1,713.50 
+        34 Sasquatch Ale                            Beverages                 19    $6,678.00 
+        35 Steeleye Stout                           Beverages                 36   $14,536.80 
+        36 Inlagd Sill                              Seafood                   31   $14,542.60 
+        37 Gravad lax                               Seafood                    6    $3,047.20 
+        38 Ctte de Blaye                            Beverages                 24  $149,984.20 
+        39 Chartreuse verte                         Beverages                 30   $13,150.80 
+        40 Boston Crab Meat                         Seafood                   41   $19,048.30 
+        41 Jack's New England Clam Chowder          Seafood                   47    $9,098.10 
+        42 Singaporean Hokkien Fried Mee            Grains/Cereals            30    $9,332.40 
+        43 Ipoh Coffee                              Beverages                 27   $24,527.20 
+        44 Gula Malacca                             Condiments                23   $10,493.20 
+        45 Rxgede sild                              Seafood                   14    $4,740.50 
+        46 Spegesild                                Seafood                   27    $6,144.00 
+        47 Zaanse koeken                            Confections               21    $4,358.60 
+        48 Chocolade                                Confections                6    $1,542.75 
+        49 Maxilaku                                 Confections               21    $9,500.00 
+        50 Valkoinen suklaa                         Confections               10    $3,510.00 
+        51 Manjimup Dried Apples                    Produce                   39   $44,742.60 
+        52 Filo Mix                                 Grains/Cereals            29    $3,383.80 
+        53 Perth Pasties                            Meat/Poultry              30   $21,510.20 
+        54 Tourtihre                                Meat/Poultry              36    $5,121.00 
+        55 Pbti chinois                             Meat/Poultry              33   $19,512.00 
+        56 Gnocchi di nonna Alice                   Grains/Cereals            50   $45,121.20 
+        57 Ravioli Angelo                           Grains/Cereals            23    $7,807.80 
+        58 Escargots de Bourgogne                   Seafood                   18    $6,664.75 
+        59 Raclette Courdavault                     Dairy Products            54   $76,296.00 
+        60 Camembert Pierrot                        Dairy Products            51   $50,286.00 
+        61 Sirop dirable                           Condiments                24   $16,438.80 
+        62 Tarte au sucre                           Confections               48   $49,827.90 
+        63 Vegie-spread                             Condiments                17   $17,696.30 
+        64 Wimmers gute Semmelknvdel                Grains/Cereals            30   $23,009.00 
+        65 Louisiana Fiery Hot Pepper Sauce         Condiments                32   $14,607.00 
+        66 Louisiana Hot Spiced Okra                Condiments                 8    $3,519.00 
+        67 Laughing Lumberjack Lager                Beverages                 10    $2,562.00 
+        68 Scottish Longbreads                      Confections               34    $9,362.50 
+        69 Gudbrandsdalsost                         Dairy Products            31   $24,307.20 
+        70 Outback Lager                            Beverages                 39   $11,472.00 
+        71 Flxtemysost                              Dairy Products            42   $20,876.50 
+        72 Mozzarella di Giovanni                   Dairy Products            38   $25,738.80 
+        73 Rvd Kaviar                               Seafood                   14    $4,200.00 
+        74 Longlife Tofu                            Produce                   13    $2,566.00 
+        75 Rhvnbrdu Klosterbier                     Beverages                 46    $8,650.55 
+        76 Lakkalikvvri                             Beverages                 39   $16,794.00 
+        77 Original Frankfurter grüne Soße          Condiments                38    $9,685.00 
+
+ 77 rows selected 
+
+
+--****************************************************************************************************
+--QUESTION 6(d): Filter your results to show only those products which have net total sales > 45,000. 
+--In this part, consider the discount (i.e., do not ignore it) while calculating total sales and give this column a heading of Net Total Sales. 
+--Sort by net total sales so the product with the highest shows first.
+
+select od.productid, p.productname, pl.pl_name, count(od.productid) as "No of Orders", 
+to_char(sum((od.unitprice * od.quantity) - (od.unitprice * od.quantity)*od.discount), '$999,999.99') as "Total Sales"
+from corp.order_details od, corp.products p, corp.product_lines pl
+where p.productid = od.productid
+and pl.pl_id = p.pl_id
+group by od.productid, p.productid, p.productname, pl.pl_name
+having(sum((od.unitprice * od.quantity) - (od.unitprice * od.quantity)*od.discount) > 45000)
+order by "Total Sales" desc;  
+
+--EXPLANATION: The query is virtually identical with only the filtering being applied by the 
+--use of a HAVING condition. Although, to do this accurately, the discount needs to be applied
+--to each product based on the discounts applied for entries in the order_details table. This 
+--discount is a percentage subtracted from the line price (unitprice * quantity). Thus, the 
+--discount has to be computed and then subtracted from the line price. The HAVING filter is applied
+--to the groupings yielding the proper results.
+
+--OUTPUT:
+
+ PRODUCTID PRODUCTNAME                              PL_NAME         No of Orders Total Sales
+---------- ---------------------------------------- --------------- ------------ ------------
+        38 Ctte de Blaye                            Beverages                 24  $141,396.73 
+        29 Thüringer Rostbratwurst                  Meat/Poultry              32   $80,368.67 
+        59 Raclette Courdavault                     Dairy Products            54   $71,155.70 
+        62 Tarte au sucre                           Confections               48   $47,234.97 
+        60 Camembert Pierrot                        Dairy Products            51   $46,825.48
+        
+        
+--****************************************************************************************************
+--QUESTION 7(a): Display the shipperID and shipper company names and company phone of 
+--the shipping companies whose name start with 'USA' or 'S'.
+
+select s.shipperID, s.companyname, s.phone
+from corp.shippers s
+where s.companyname
+like 'S%' or s.companyname like 'US%';  
+
+--OUTPUT:
+
+ SHIPPERID COMPANYNAME                              PHONE                  
+---------- ---------------------------------------- ------------------------
+         1 Speedy Express                           (520) 555-9831           
+         4 USPS Ship                                (520) 555-6492
+
+--EXPLANATION: This query is a very simple, one-table select using a LIKE to return names
+--that match the patterns "US" or "S". 
+
+
+--************************************************************************************************
+--QUESTION 7(b): Show only those shipping companies which have not shipped a single order to Switzerland.
+
+select distinct o.shipvia, s.companyname 
+from corp.orders o, corp.shippers s
+where o.shipvia not in (select o2.shipvia from corp.orders o2 where o2.shipcountry = 'Switzerland')
+and s.shipperid = o.shipvia;
+
+--OUTPUT:
+
+   SHIPVIA COMPANYNAME                            
+---------- ----------------------------------------
+         4 USPS Ship 
+
+--EXPLANATION: There art two queries here. The first outer query joins orders and shippers.
+--The second query performs a MINUS by using the NOT IN to subtract results from the 
+--outer query. The DISTINCT operator is used in the outer query to restrict output
+--to one line of shippers.
+
+
+--************************************************************************************************
+--QUESTION 7(c): Additionally: show the number of orders that the company has shipped, heading: No. Orders Shipped, 
+--the number of different countries (Heading: No. Countries) where shipper has sent the orders, 
+--and the total freight charges for the shipper (Heading: Total Freight , format: $999,999.99).
+
+select distinct o.shipvia, s.companyname, count(*) as "No. Orders Shipped", to_char(sum(o.freight), '$999,999.99') as "Total Freight"
+from corp.orders o, corp.shippers s
+where o.shipvia not in (select o2.shipvia from corp.orders o2 where o2.shipcountry = 'Switzerland')
+and s.shipperid = o.shipvia
+group by o.shipvia, s.companyname;
+
+--OUTPUT:
+
+   SHIPVIA COMPANYNAME                              No. Orders Shipped Total Freight
+---------- ---------------------------------------- ------------------ -------------
+         4 USPS Ship                                                36    $1,437.34
+
+--EXPLANATION:  This query is based on the prior query to identify the one shipper
+--that had not shipped to Switzerland. The aggregate functions count() and sum() are
+--needed to count the number of shipments that would be returned for the shipper "USPS Ship".
+--The sum() function sums the total from the o.freight column for each of the 36 lines 
+--that the query would return. The GROUP BY is used to create a group for the query
+--based primarily on the shipper's id (shipvia), but because the companyname is also
+--needed, it must be included in the aggregation.  
+
+
+--************************************************************************************************
+--QUESTION 7(d): Show only those shippers that have shipped orders to fewer cities than the average 
+--(i.e., if one were to compare with an average number of cities computed across all shippers).
+
+select o.shipvia, s.companyname, count(distinct o.shipcity)
+from corp.orders o, corp.shippers s
+where o.shipvia = s.shipperid
+group by o.shipvia, s.companyname 
+having count(distinct o.shipcity) < 
+(select avg(xx) from (select o2.shipvia, count(distinct o2.shipcity) as xx from corp.orders o2 group by o2.shipvia));
+
+--OUTPUT:
+
+   SHIPVIA COMPANYNAME                              Num Cities
+---------- ---------------------------------------- ----------
+         4 USPS Ship                                        26 
+         5 Quick Delivery                                   31 
+
+--EXPLANATION: I solved this by first writing two separate queries. The first one just gave the
+--counts of different cities for each shipper:
+
+select o.shipvia, count(distinct o.shipcity) as "Counts"
+from corp.orders o
+group by o.shipvia;  --gives counts 
+
+--Then, I wrote a query to compute the average of the results as follows: 
+ 
+select avg(xx) from 
+  (select o.shipvia, count(distinct o.shipcity) as xx
+  from corp.orders o
+  group by o.shipvia);  --49.8 is the average  
+
+--This query uses a nested "from select" to return just the averages and nothing else.
+--This is important in the next step.
+
+--Then I combined the two where I could have the second query that computes the averages
+--operate on the output of the first query's GROUP BY results. Thus, I used the
+--HAVING keyword to combine two aggregation queries. The HAVING < operation
+--filters the results to only shippers with less than 49.8 cities shipped to.
